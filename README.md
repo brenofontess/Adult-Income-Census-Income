@@ -1,4 +1,4 @@
-# IncomeClass: Adult Income Classification (XGBoost Pipeline)
+# IncomeClass: Adult Income Classification
 
 **Objective:** Develop a Machine Learning model to predict whether an individual's annual income exceeds $50,000, based on demographic and employment data from the "Adult Income" dataset, using automated feature-combination experiments (tracked in MLflow) to maximize the **F2-Score** — balancing Recall and Precision, with emphasis on Recall.
 
