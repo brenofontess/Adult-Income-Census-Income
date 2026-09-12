@@ -1,23 +1,25 @@
-# IncomeClass: Adult Income Classification
+# IncomeClass: Adult Income Classification (XGBoost Pipeline)
 
-**Objective:** Develop a Machine Learning model to predict whether an individual's annual income exceeds $50,000, based on demographic and employment data from the "Adult Income" census dataset, prioritizing **recall maximization** of the positive class (>50K) to minimize false negatives.
+**Objective:** Develop a Machine Learning model to predict whether an individual's annual income exceeds $50,000, based on demographic and employment data from the "Adult Income" dataset, using automated feature-combination experiments (tracked in MLflow) to maximize the **F2-Score** — balancing Recall and Precision, with emphasis on Recall.
 
 ### 📊 Data & Feature Engineering
-* **Dataset:** Adult Income (census), 48,842 records and 15 columns, with imbalanced classes (≈76% `<=50K` vs. ≈24% `>50K`).
-* **Cleaning:** Removal of duplicates; imputation of missing values in `workclass` (`unemployed`), `occupation` and `native-country` (`missing`), with creation of indicator flags.
-* **Feature engineering:** Creation of binary variables (`is_capital_gain`, `is_capital_loss`) for columns with IQR≈0, and domain-knowledge ordinal encoding for `marital-status` and `relationship`.
-* **Validation:** Stratified train/validation/test split (60%/20%/20%), with Grid Search (5-fold CV), threshold tuning, and Nested Cross-Validation to assess model robustness.
+* **Dataset:** Adult Income, 48,842 records, split into train (29,305 / 60%), validation (9,768 / 20%), and test (9,769 / 20%) sets, stratified by target class.
+* **Automated experimentation:** Systematic search across thousands of feature combinations (3–11 features per experiment), each trained via a Scikit-learn Pipeline with an XGBoost classifier, logged and compared through MLflow.
+* **Feature engineering:** Binary flags (`is_capital_gain`, `is_wife`, `is_native-country_missing`), ordinal encodings (`marital_status_ord`, `relationship_ord`, `workclass_ord`), and interaction terms (`edu_x_hours`), selected via cross-validated F2-Score.
+* **Validation:** 5-fold Stratified Cross-Validation (F2-Score scorer) for model selection, followed by Train vs. Validation vs. Test consistency checks.
 
 ### 🤖 Model Performance
-* **Models evaluated:** Logistic Regression, Random Forest.
-* **Winning model:** Random Forest.
+* **Model:** XGBoost Classifier (best of automated feature-combination search).
+* **Winning feature set (11 features):** `age`, `education-num`, `hours-per-week`, `relationship_ord`, `marital_status_ord`, `is_capital_gain`, `capital-loss`, `is_wife`, `workclass_ord`, `fnlwgt`, `is_native-country_missing`.
 * **Key metrics (test set):**
-  * **Recall (>50K):** 0.86 *(up from an initial recall of just 0.40)*
-  * **ROC-AUC:** 0.856
-  * **Precision:** 0.54 (threshold = 0.50)
-  * *Comparison:* Logistic Regression achieved a recall of 0.84 and AUC of 0.882, with greater stability in Nested CV.
+  * **F2-Score:** 0.78 (CV) / 0.784 (test)
+  * **Recall (>50K):** 0.87–0.88
+  * **Precision:** 0.54
+  * **AUC-ROC:** 0.904
+  * **AUC-PR:** 0.757
 
 ### 💡 Key Takeaways
-* **Feature engineering was decisive:** Introducing `hours-per-week`, `is_capital_loss`, `marital_status_ord`, and `relationship_ord` raised recall from 0.74/0.79 to 0.84/0.86 and ROC-AUC from 0.82/0.84 to 0.88/0.89.
-* **Production decision:** Random Forest was selected for maximizing recall on the class of interest — the central goal of the problem — despite Logistic Regression being slightly more stable under nested cross-validation.
-* **Sensitive variables:** `gender` and `race` were analyzed but excluded from the final model due to low feature importance and the ethical considerations they raise in justifying income-related decisions.
+* **Automated feature selection at scale:** Testing thousands of feature combinations via MLflow identified an 11-feature set that maximizes F2-Score, moving beyond manual feature curation.
+* **Strong generalization:** Train/Validation/Test performance gap averaged ~0.005–0.01 in F2-Score, indicating minimal overfitting and high reliability across splits.
+* **Feature importance concentration:** `marital_status_ord` alone accounts for 36% of feature importance; the top 3 features explain 81.5%, and the top 5 explain 90.3% of the model's predictive power.
+* **Production decision:** XGBoost was selected over simpler models for its superior discrimination (AUC-ROC > 0.90) and stronger recall on the positive class, at the cost of moderate precision — an acceptable trade-off given the goal of minimizing missed high-income cases.
