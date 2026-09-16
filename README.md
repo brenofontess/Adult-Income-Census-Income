@@ -24,4 +24,4 @@
 * **Feature importance concentration:** `marital_status_ord` alone accounts for 36% of feature importance; the top 3 features explain 81.5%, and the top 5 explain 90.3% of the model's predictive power.
 * **Production decision:** XGBoost was selected over simpler models for its superior discrimination (AUC-ROC > 0.90) and stronger recall on the positive class, at the cost of moderate precision — an acceptable trade-off given the goal of minimizing missed high-income cases.
 
-Update date: 14/09/2026
+Update date: 16/09/2026
