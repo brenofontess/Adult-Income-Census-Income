@@ -1,27 +1,35 @@
 # IncomeClass: Adult Income Classification
 
-**Objective:** Develop a Machine Learning model to predict whether an individual's annual income exceeds $50,000, based on demographic and employment data from the "Adult Income" dataset, using automated feature-combination experiments (tracked in MLflow) to maximize the **F2-Score** — balancing Recall and Precision, with emphasis on Recall.
+**Objective:** Develop a Machine Learning model to predict whether an individual's annual income exceeds $50,000, based on demographic and employment data from the "Adult Income" dataset, using automated feature-combination experiments (tracked in MLflow) to compare two optimization objectives — **F2-Score** (recall-weighted) and **F1-Score** (balanced) — and select the trade-off best suited to the business use case.
 
 ### 📊 Data & Feature Engineering
 * **Dataset:** Adult Income, 48,842 records, split into train (29,305 / 60%), validation (9,768 / 20%), and test (9,769 / 20%) sets, stratified by target class.
-* **Automated experimentation:** Systematic search across thousands of feature combinations (3–11 features per experiment), each trained via a Scikit-learn Pipeline with an XGBoost classifier, logged and compared through MLflow.
-* **Feature engineering:** Binary flags (`is_capital_gain`, `is_wife`, `is_native-country_missing`), ordinal encodings (`marital_status_ord`, `relationship_ord`, `workclass_ord`), and interaction terms (`edu_x_hours`), selected via cross-validated F2-Score.
-* **Validation:** 5-fold Stratified Cross-Validation (F2-Score scorer) for model selection, followed by Train vs. Validation vs. Test consistency checks.
+* **Automated experimentation:** Systematic random search across 1,500 feature combinations (3–11 features per experiment) out of a candidate space of 106,590 possible combinations, each trained via a Scikit-learn Pipeline with an XGBoost classifier, logged and compared through MLflow — run independently for each optimization objective.
+* **Feature engineering:** Binary flags (`is_married`, `is_capital_gain`, `is_wife`, `is_native-country_missing`), interaction terms (`edu_x_hours`), and nominal categoricals (`marital-status`, `occupation`, `workclass`, `relationship`, `native-country`, `race`) encoded via **OneHotEncoder**. Ordinal encoding was deliberately dropped in favor of OHE, since these variables have no natural order — an ordinal scheme was found to impose false distance assumptions between categories and to distort feature-importance rankings.
+* **Validation:** 5-fold Stratified Cross-Validation (objective-specific scorer) for model selection, followed by Train vs. Validation vs. Test consistency checks and per-model threshold tuning on the validation set.
 
 ### 🤖 Model Performance
-* **Model:** XGBoost Classifier (best of automated feature-combination search).
-* **Winning feature set (11 features):** `age`, `education-num`, `hours-per-week`, `relationship_ord`, `marital_status_ord`, `is_capital_gain`, `capital-loss`, `is_wife`, `workclass_ord`, `fnlwgt`, `is_native-country_missing`.
-* **Key metrics (test set):**
-  * **F2-Score:** 0.78 (CV) / 0.784 (test)
-  * **Recall (>50K):** 0.87–0.88
-  * **Precision:** 0.54
-  * **AUC-ROC:** 0.904
-  * **AUC-PR:** 0.757
+
+Two XGBoost models were tuned and evaluated independently, each with its own `RandomizedSearchCV` hyperparameters, feature-combination search, and decision threshold — optimized for a different objective.
+
+| | **F2-Score model** (recall-weighted) | **F1-Score model** (balanced) |
+|---|---|---|
+| **Winning feature set (11)** | `age`, `education-num`, `hours-per-week`, `is_married`, `occupation`, `relationship`, `is_capital_gain`, `native-country`, `capital-loss`, `is_wife`, `sex` | `age`, `education-num`, `hours-per-week`, `is_married`, `occupation`, `workclass`, `is_capital_gain`, `capital-loss`, `is_male`, `sex`, `is_native-country_missing` |
+| **Decision threshold** | 0.35 | 0.66 |
+| **Recall (>50K)** | 0.935 | 0.732 |
+| **Precision** | 0.481 | 0.670 |
+| **F2 / F1 (test)** | 0.786 | 0.699 |
+| **AUC-ROC** | 0.907 | 0.912 |
+| **AUC-PR** | 0.766 | 0.780 |
+| Train/Val/Test gap | ~0.011 avg. | ~0.028 avg. |
+
+Both variants were also benchmarked against `VotingClassifier` and `StackingClassifier` ensembles; in both cases the standalone XGBoost model matched or slightly outperformed the ensembles (Δ ≤ 0.005), so the simpler single-model pipeline was kept in production for each objective.
 
 ### 💡 Key Takeaways
-* **Automated feature selection at scale:** Testing thousands of feature combinations via MLflow identified an 11-feature set that maximizes F2-Score, moving beyond manual feature curation.
-* **Strong generalization:** Train/Validation/Test performance gap averaged ~0.005–0.01 in F2-Score, indicating minimal overfitting and high reliability across splits.
-* **Feature importance concentration:** `marital_status_ord` alone accounts for 36% of feature importance; the top 3 features explain 81.5%, and the top 5 explain 90.3% of the model's predictive power.
-* **Production decision:** XGBoost was selected over simpler models for its superior discrimination (AUC-ROC > 0.90) and stronger recall on the positive class, at the cost of moderate precision — an acceptable trade-off given the goal of minimizing missed high-income cases.
+* **Objective choice drives the precision/recall trade-off directly, not model quality.** Both models reach comparable, strong discrimination (AUC-ROC 0.90–0.91), but the F2 model trades precision for near-total recall (93.5%), while the F1 model roughly balances the two (73.2% recall / 67.0% precision). Which to deploy depends on whether missed high-income cases (false negatives) or wasted downstream effort on false positives is more costly for the use case.
+* **Automated feature selection at scale:** Testing 1,500 feature combinations via MLflow per objective surfaced different — but overlapping — optimal feature sets for each metric, both centered on marital-status signals (`is_married`) plus occupation and income-adjacent numeric features.
+* **Feature importance concentration:** `is_married` alone accounts for 47.5% of feature importance in the F2 model and 40.2% in the F1 model; the top 3 features explain 79.6% (F2) and 75.2% (F1), and the top 5 explain 90.2% (F2) and 88.0% (F1) of predictive power. This concentration is consistent across both objectives, confirming it reflects a genuine signal in the data rather than an artifact of the encoding or optimization metric.
+* **Both models generalize well:** Train/Validation/Test performance gaps stayed under 0.03 for both objectives, indicating no significant overfitting in either configuration.
+* **Kept as parallel experimental branches:** Both notebooks are maintained side by side rather than converged into a single "production" choice, since the right operating point depends on downstream business cost of false positives vs. false negatives — a decision outside the scope of the modeling pipeline itself.
 
 Update date: 16/09/2026
