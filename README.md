@@ -32,4 +32,9 @@ Both variants were also benchmarked against `VotingClassifier` and `StackingClas
 * **Both models generalize well:** Train/Validation/Test performance gaps stayed under 0.03 for both objectives, indicating no significant overfitting in either configuration.
 * **Kept as parallel experimental branches:** Both notebooks are maintained side by side rather than converged into a single "production" choice, since the right operating point depends on downstream business cost of false positives vs. false negatives — a decision outside the scope of the modeling pipeline itself.
 
-Update date: 16/09/2026
+* ### 🎯 Recommended Use by Objective
+
+* **Marketing / campaign targeting** (contacting customers with likely income >$50K): favor the **F1 model**. Each false positive has a real cost (a wasted contact), and 67% precision is far more commercially defensible than 48% — you spend outreach budget on leads that are actually worth pursuing.
+* **Screening with a human-in-the-loop, or eligibility checks where missing a case is costly** (e.g., benefit eligibility, triage followed by manual review): favor the **F2 model**. Here the cost of a false negative (missing a qualifying case) outweighs the cost of a false positive that a human reviewer will filter out downstream, so maximizing recall (93.5%) is the right trade-off.
+
+Update date: 22/09/2026
