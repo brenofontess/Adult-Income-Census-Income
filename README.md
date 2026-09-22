@@ -2,6 +2,10 @@
 
 **Objective:** Develop a Machine Learning model to predict whether an individual's annual income exceeds $50,000, based on demographic and employment data from the "Adult Income" dataset, using automated feature-combination experiments (tracked in MLflow) to compare two optimization objectives — **F2-Score** (recall-weighted) and **F1-Score** (balanced) — and select the trade-off best suited to the business use case.
 
+**Tools & Techniques:** Databricks (PySpark ETL pipeline), Python, Scikit-learn (Pipeline, ColumnTransformer, OneHotEncoder, StandardScaler, SimpleImputer, RandomizedSearchCV, StratifiedKFold), XGBoost, Logistic Regression, VotingClassifier, StackingClassifier, MLflow (experiment tracking), pandas, Matplotlib.
+
+**Keywords:** Machine Learning, Binary Classification, Feature Engineering, One-Hot Encoding, Gradient Boosting, Ensemble Learning, Hyperparameter Tuning, Imbalanced Classification, F1-Score, F2-Score, MLflow, Databricks, Income Prediction.
+
 ### 📊 Data & Feature Engineering
 * **Dataset:** Adult Income, 48,842 records, split into train (29,305 / 60%), validation (9,768 / 20%), and test (9,769 / 20%) sets, stratified by target class.
 * **Automated experimentation:** Systematic random search across 1,500 feature combinations (3–11 features per experiment) out of a candidate space of 106,590 possible combinations, each trained via a Scikit-learn Pipeline with an XGBoost classifier, logged and compared through MLflow — run independently for each optimization objective.
