@@ -1,0 +1,58 @@
+-- 1. Rate of >$50k by education level
+SELECT
+    education,
+    COUNT(*) AS total_individuals,
+    SUM(CASE WHEN class = '>50K' THEN 1 ELSE 0 END) AS count_above_50k,
+    ROUND(100.0 * SUM(CASE WHEN class = '>50K' THEN 1 ELSE 0 END) / COUNT(*), 2) AS rate_above_50k_pct
+FROM adult_income.adult_income_gold.ad_inc_gold
+GROUP BY education
+ORDER BY rate_above_50k_pct DESC;
+
+-- 2. Average age and rate of >50K by work class
+SELECT
+    workclass,
+    COUNT(*) AS total_individuals,
+    ROUND(AVG(age), 1) AS avg_age,
+    ROUND(100.0 * SUM(CASE WHEN class = '>50K' THEN 1 ELSE 0 END) / COUNT(*), 2) AS rate_above_50k_pct
+FROM adult_income.adult_income_gold.ad_inc_gold
+GROUP BY workclass
+ORDER BY rate_above_50k_pct DESC;
+
+-- 3. Top 5 occupations with the highest rate of >$50k earnings
+SELECT
+    occupation,
+    COUNT(*) AS total_individuals,
+    ROUND(100.0 * SUM(CASE WHEN class = '>50K' THEN 1 ELSE 0 END) / COUNT(*), 2) AS rate_above_50k_pct
+FROM adult_income.adult_income_gold.ad_inc_gold
+GROUP BY occupation
+ORDER BY rate_above_50k_pct DESC
+LIMIT 5;
+
+-- 4. Comparison of the rate of >50K between Sex
+SELECT
+    sex,
+    COUNT(*) AS total_individuals,
+    ROUND(100.0 * SUM(CASE WHEN class = '>50K' THEN 1 ELSE 0 END) / COUNT(*), 2) AS rate_above_50k_pct
+FROM adult_income.adult_income_gold.ad_inc_gold
+GROUP BY sex
+ORDER BY rate_above_50k_pct DESC;
+
+-- 5. Work class with the highest concentration of low income (<=50K)
+SELECT
+    workclass,
+    COUNT(*) AS total_individuals,
+    SUM(CASE WHEN class = '<=50K' THEN 1 ELSE 0 END) AS count_below_50k,
+    ROUND(100.0 * SUM(CASE WHEN class = '<=50K' THEN 1 ELSE 0 END) / COUNT(*), 2) AS rate_below_50k_pct
+FROM adult_income.adult_income_gold.ad_inc_gold
+GROUP BY workclass
+ORDER BY rate_below_50k_pct DESC;
+
+-- 6. Income profile combining education and marital status
+SELECT
+    education,
+    `marital-status` AS marital_status,
+    COUNT(*) AS total_individuals,
+    ROUND(100.0 * SUM(CASE WHEN class = '>50K' THEN 1 ELSE 0 END) / COUNT(*), 2) AS rate_above_50k_pct
+FROM adult_income.adult_income_gold.ad_inc_gold
+GROUP BY education, `marital-status`
+ORDER BY rate_above_50k_pct DESC;
